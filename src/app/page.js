@@ -1,65 +1,361 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { MailOpen, Heart, Sparkles, Send } from "lucide-react";
+import confetti from "canvas-confetti";
+
+// 1. قاعدة بيانات الأدعية المنسقة بأعلى درجات الفصاحة، الحنان والدعاء المشهور
+const prayersData = {
+  بتول: "ما بعرفك كتير و لكن أحببتكِ في الله وكنتِ بين دعواتي الصادقة في هذه الأيام المباركة، أسأل الله أن يوفقكِ في حياتكِ وفي مسعاكِ وفي كل خطواتكِ، وأن يرضى عنكِ ويرضيكِ ويراضيكِ، ويكرمكِ بكرمه الواسع وجوده وعطائه فوق ما يتمناه قلبكِ، وأن تسعدي بعمركِ بأكمله سعادة الدارين يا عزيزتي.. الله يعطيكِ من خير عطاياه ويقرّ عينكِ.",
+
+  لجين: "عزيزتي لجين.. في هذه الأيام الفضيلة المباركة، أسأل الله أن يقرّ عينكِ، وأن يكرمكِ بإجابة دعواتكِ، ويجبر قلبكِ جبراً يدهش عباده أجمعين، وأن يسعدكِ سعادة الدارين، ويرزقكِ رزقاً واسعاً طيباً مباركاً، ويكرمكِ بالصبيان والبنات ويجعلهم قرة عين لكِ.",
+
+  نوف: "الله يشرح صدركِ ويفتحها عليكِ فتحاً يذهلكِ اتساعه، ويهب لكِ من خير عطاياه وأوسعها، ويبسط عليكِ الرزق ويبارك لكِ فيه، ويجعلكِ صالحة تقية نقية مباركة آمنة رحبة مطمئنة سعيدة، عظيمة الحظ وعالية الشأن والمقام. الله يرزقكِ هداة البال وراحته، وسكينة القلب وطمأنينته، ويرزقكِ ما تتمنينه على يسر وخير وعفو وعافية. الله يصب في قلبكِ يا نوف يا بنت هاني الرضا صبّاً صبّاً، ويقذف في قلبكِ حب الحياة، ويُشرق الشمس في روحكِ.. شمسٌ ما لها غروب، الله يوسعها عليكِ ويزيدكِ من فضله ويرفع قدركِ ودرجاتكِ في الدنيا والآخرة.",
+
+  هيا: "الله يوفقكِ بمسعاكِ ويدل الخير عليكِ ويدلكِ للخير، ويسخر لكِ الأرض ومن عليها والسماء ومن فيها، ويكرمكِ بكرمه وجوده وعطائه، ويرزقكِ من أوسع أبواب رزقه ويفتحها عليكِ من حيث لا تحتسبين، ويجبر قلبكِ جبراً يدهش عباده، ويهب لكِ -وهو الوهاب- الصالح الهنيّ الغنيّ التقيّ الذي لا تشقين بجواره ولا تهونين على قلبه، الأنيس والرفيق والسند والعون لكِ.. الله يرضى عنكِ ويزيدكِ من فضله الواسع.",
+
+  سوسو: "الله يحقق لكِ كل شيء بتتمنيه يا رب، ويسعدكِ ويرضى عليكِ ويزيدكِ من فضله الواسع، ويكرمكِ الكريم بكرمه وجوده، ويجبر قلبكِ وخاطركِ جبراً يليق بعظمته.. ويوفقكِ في طريقكِ ويبارك لكِ في خطواتكِ ويبلغكِ مناكِ وما يخيب لكِ محاولة.. يا رب تبكي بكاء الإجابة قريباً من عظم الفرح والفرج.",
+
+  مايا: "الله يرزقكِ رزقاً واسعاً ويطيّب خاطركِ ويجبره جبراً يليق بعظمته، ويسخر لكِ الأرض ومن عليها والسماء ومن فيها، ويدلكِ على الخير ويدل الخير عليكِ، ويوفقكِ ويبارك لكِ في خطواتكِ يا عزيزتي، ويبكيكِ بكاء الإجابة والفرج قريباً جداً يا رب.",
+
+  سميرة:
+    "عزيزتي سميرة.. الله يرضى عليكِ ويجبر بخاطركِ ويعوضكِ خير عوض يدهش عباده، ويرزقكِ من أوسع أبوابه ويزيدكِ من فضله الواسع، ويكرمكِ بكرمه ويوفقكِ وييسر لكِ أموركِ كلها، ويحقق لكِ أصدق دعواتكِ قريباً يا رب العالمين.",
+
+  هدى: "حبيبتي أختي الكبيرة.. الله يسعدكِ ويوفقكِ وينور دربكِ وييسر لكِ كل عسير، ويتمم أموركِ كلها على خير، ويسعدكِ سعادة الدارين، ويرضى عليكِ رضا لا تشقين بعده أبداً، ويبارك لكِ في خطواتكِ ومسعاكِ يا عزيزة روحي وفخرها.",
+
+  ميار: "حبيبة قلبي التي صارت أقرب من قبل.. الله يوفقكِ ويكرمكِ بأعلى الدرجات في الدنيا والآخرة، ويرزقكِ رزقاً واسعاً طيباً مباركاً فيه، وتتكاثر السعادة في قلبكِ لتلك الدرجة التي لا تسعكِ بها الدنيا من فرط فرحتكِ! الله يجبر بخاطركِ ويحقق لكِ كل دعواتكِ ويرضى عليكِ ويرضيكِ يا رب.",
+
+  فوفو: "ماما حبيبتي.. الله يحفظكِ ويديمكِ لنا وتاجاً فوق رؤوسنا، وربي يسعدكِ سعادة الدارين، ويرضى عليكِ ويجبر بخاطركِ جبراً يليق بعظمته، ويكرمكِ بكرمه الواسع ويجيب كل دعواتكِ التي تدعين بها لنا، ويقرّ عينكِ فينا ولا يرينا فيكِ مكروهاً أبداً.",
+
+  محمد: "بابا حبيبي.. الله يحفظك ونبقى نراك دائماً تاجاً فوق رؤوسنا، وتظل فخوراً بنا دائماً وأبداً. الله يبارك لك في جهدك وفي تعبك وفي رزقك وفي عمرك وصحتك، ويفتحها عليك من حيث لا تحتسب، ويزيدك من فضله الواسع، ويقرّ عينك فينا ويرزقك طمأنينة القلب.",
+
+  لانا: "الله يجبر بخاطركِ يا أختي الحبيبة، ويعطيكِ حتى يرضيكِ، ويرضى عنكِ ويزيدكِ من فضله العظيم، ويهديكِ ويجيب دعواتكِ كلها وينور بصيرتكِ ويجعل التوفيق حليفكِ في كل أمر.",
+
+  ملك: "إلى ملك الغالية.. أسأل الله العظيم في يوم عرفة أن يجعل لكِ من اسمكِ نصيباً، فتكوني ملكةً برضاكِ وسعادتكِ وتوفيقكِ. ربي يفتح لكِ أبواب الخير العميقة، ويبارك في عمركِ وعملكِ، ويرزقكِ نجاحاً مبهراً وطمأنينة تملأ قلبكِ النقي.",
+
+  رغد: "عزيزتي رغد.. ربي يجعل أيامكِ القادمة كلها رغد وسعة وهناء، ويرزقكِ توفيقاً تدمع عينكِ منه فرحاً، ويبارك في كل خطوة تخطينها في مسعاكِ، ويبلغكِ أسمى مرادكِ في الدنيا والآخرة وأنتِ بأتم صحة وعافية وجبر خاطر.",
+
+  زينة: "إلى زينة الحبيبة.. ربي يزين أيامكِ بالفرح، وقلبكِ بالسكينة، وحياتكِ بالتوفيق والبركة. أسأل الله في هذا اليوم الفضيل أن يجبر بخاطركِ، ويعطيكِ من فضله الواسع حتى ترضي، ويجعل السعادة مستقراً لروحكِ الجميلة.",
+
+  // الخالات (تم تحديث النداء في أول الدعاء وتطعيمها بالأدعية المشهورة)
+  امل: "خالتو العزيزة والغالية أمل.. أسأل الله العظيم في يوم عرفة المشهود أن يجبر قلبكِ جبراً يليق بكرمه، وأن يعوضكِ خيراً يدهش قلبكِ النقي، ويقرّ عينكِ بكل ما تتمنينه وتدعين به. اللهم اجعلها من المقبولين وعتقاء هذا اليوم المبارك من النار، وارزقها السعادة والبركة والرضا والعافية التامة.",
+  "خالتو امل":
+    "خالتو العزيزة والغالية أمل.. أسأل الله العظيم في يوم عرفة المشهود أن يجبر قلبكِ جبراً يليق بكرمه، وأن يعوضكِ خيراً يدهش قلبكِ النقي، ويقرّ عينكِ بكل ما تتمنينه وتدعين به. اللهم اجعلها من المقبولين وعتقاء هذا اليوم المبارك من النار، وارزقها السعادة والبركة والرضا والعافية التامة.",
+
+  ريهام:
+    "خالتو العزيزة والغالية ريهام.. ربي يكتب لكِ الجبر العاجل والعوض الجميل الذي ينسيكِ كل تعب، ويقرّ عينكِ بما تحبين، ويرزقكِ التوفيق والرضا التام، ويبارك في عمركِ وأيامكِ ويملأ بيتكِ وقلبكِ ببهجة لا تزول وسعادة تغمر روحكِ النبيلة.",
+  "خالتو ريهام":
+    "خالتو العزيزة والغالية ريهام.. ربي يكتب لكِ الجبر العاجل والعوض الجميل الذي ينسيكِ كل تعب، ويقرّ عينكِ بما تحبين، ويرزقكِ التوفيق والرضا التام، ويبارك في عمركِ وأيامكِ ويملأ بيتكِ وقلبكِ ببهجة لا تزول وسعادة تغمر روحكِ النبيلة.",
+
+  هالة: "خالتو العزيزة والغالية هالة.. في هذا اليوم المبارك العظيم، أسأل الله أن يفيض على قلبكِ بالجبر والسكينة، ويعوضكِ عوضاً يثلج صدركِ ويقرّ عينكِ بكل غالٍ. اللهم وفّقها في كل أمورها، واجعل البركة والرضا والعفو والعافية رفقاء دربها دائماً وأبداً.",
+  "خالتو هالة":
+    "خالتو العزيزة والغالية هالة.. في هذا اليوم المبارك العظيم، أسأل الله أن يفيض على قلبكِ بالجبر والسكينة، ويعوضكِ عوضاً يثلج صدركِ ويقرّ عينكِ بكل غالٍ. اللهم وفّقها في كل أمورها، واجعل البركة والرضا والعفو والعافية رفقاء دربها دائماً وأبداً.",
+
+  سهاد: "خالتو العزيزة والغالية سهاد.. ربي يجبر بخاطركِ جبراً عظيماً يدهش أهل الأرض والسماء، ويعوضكِ عن كل صبر خيراً وفرحاً، ويقرّ عينكِ بتحقيق أمنياتكِ المستجابة. اللهم ارزقها التوفيق والبركة والسعادة الدائمة في الدنيا والآخرة وارضَ عنها وأرضها.",
+  "خالتو سهاد":
+    "خالتو العزيزة والغالية سهاد.. ربي يجبر بخاطركِ جبراً عظيماً يدهش أهل الأرض والسماء، ويعوضكِ عن كل صبر خيراً وفرحاً, ويقرّ عينكِ بتحقيق أمنياتكِ المستجابة. اللهم ارزقها التوفيق والبركة والسعادة الدائمة في الدنيا والآخرة وارضَ عنها وأرضها.",
+
+  مها: "خالتو العزيزة والغالية مها.. أسأل الله العلي القدير في يوم عرفة الفضيل أن يمنّ على قلبكِ بالجبر التام والراحة والعوض الجميل، وأن يقرّ عينكِ بأحبابكِ، ويكتب لكِ التوفيق والبركة والرزق الطيب في حياتكِ، ويغمر أيامكِ بالسعادة والرضا العظيم.",
+  "خالتو مها":
+    "خالتو العزيزة والغالية مها.. أسأل الله العلي القدير في يوم عرفة الفضيل أن يمنّ على قلبكِ بالجبر التام والراحة والعوض الجميل، وأن يقرّ عينكِ بأحبابكِ، ويكتب لكِ التوفيق والبركة والرزق الطيب في حياتكِ، ويغمر أيامكِ بالسعادة والرضا العظيم.",
+
+  شيرين:
+    "خالتو العزيزة والغالية شيرين.. ربي يسعدكِ سعادة الدارين، ويجبر قلبكِ وخاطركِ، ويعوضكِ خير عوض تدمع عينكِ منه فرحاً سروراً، ويقرّ عينكِ بكل خير وفلاح، ويرزقكِ التوفيق الإلهي والبركة والرضا والقبول في كل خطوة تخطينها.",
+  "خالتو شيرين":
+    "خالتو العزيزة والغالية شيرين.. ربي يسعدكِ سعادة الدارين، ويجبر قلبكِ وخاطركِ، ويعوضكِ خير عوض تدمع عينكِ منه فرحاً سروراً، ويقرّ عينكِ بكل خير وفلاح، ويرزقكِ التوفيق الإلهي والبركة والرضا والقبول في كل خطوة تخطينها.",
+
+  نيروز:
+    "خالتو العزيزة والغالية نيروز.. ربي يسعد قلبكِ النقي سعادة الدارين، ويجبر بخاطركِ جبراً يليق بعظمته وكرمه، ويعوضكِ عن كل صبر خيراً وفرحاً يقرّ به عينكِ، ويبارك في صحتكِ وعمركِ ويزيدكِ من فضله الواسع الوافر وتوفيقه البرّاق.",
+  "خالتو نيروز":
+    "خالتو العزيزة والغالية نيروز.. ربي يسعد قلبكِ النقي سعادة الدارين، ويجبر بخاطركِ جبراً يليق بعظمته وكرمه، ويعوضكِ عن كل صبر خيراً وفرحاً يقرّ به عينكِ، ويبارك في صحتكِ وعمركِ ويزيدكِ من فضله الواسع الوافر وتوفيقه البرّاق.",
+
+  إيمان:
+    "خالتو العزيزة والغالية إيمان.. أسأل الله العلي القدير في يوم عرفة المبارك أن يفيض على قلبكِ بالراحة والسكينة والطمأنينة، وأن يقذف في حياتكِ بركة لا تنتهي، ويقرّ عينكِ بأحبابكِ، ويجبركِ ويعوضكِ عوضاً جميلاً يثلج صدركِ.",
+  "خالتو إيمان":
+    "خالتو العزيزة والغالية إيمان.. أسأل الله العلي القدير في يوم عرفة المبارك أن يفيض على قلبكِ بالراحة والسكينة والطمأنينة، وأن يقذف في حياتكِ بركة لا تنتهي، ويقرّ عينكِ بأحبابكِ، ويجبركِ ويعوضكِ عوضاً جميلاً يثلج صدركِ.",
+  ايمان:
+    "خالتو العزيزة والغالية إيمان.. أسأل الله العلي القدير في يوم عرفة المبارك أن يفيض على قلبكِ بالراحة والسكينة والطمأنينة، وأن يقذف في حياتكِ بركة لا تنتهي، ويقرّ عينكِ بأحبابكِ، ويجبركِ ويعوضكِ عوضاً جميلاً يثلج صدركِ.",
+  "خالتو ايمان":
+    "خالتو العزيزة والغالية إيمان.. أسأل الله العلي القدير في يوم عرفة المبارك أن يفيض على قلبكِ بالراحة والسكينة والطمأنينة، وأن يقذف في حياتكِ بركة لا تنتهي، ويقرّ عينكِ بأحبابكِ، ويجبركِ ويعوضكِ عوضاً جميلاً يثلج صدركِ.",
+
+  // بقية الأسماء
+  لما: "عزيزتي لما.. أسأل الله العظيم في هذا اليوم المبارك أن يملأ قلبكِ بالرضا والسعادة، ويبارك لكِ في رزقكِ ووقتكِ، ويفتح لكِ أبواب التوفيق ويسرّ لكِ كل عسير ويجعل أيامكِ القادمة كلها بركة وطمأنينة.",
+  بيان: "إلى بيان الغالية.. ربي يسعدكِ سعادة لا تنتهي، ويبارك في مسعاكِ وخطواتكِ، ويرزقكِ من واسع فضله التوفيق والرضا والسكينة، ويجعل دعاءكِ في يوم عرفة مستجاباً وباباً لكل خير تتمنينه.",
+  "سارة ابراهيم":
+    "عزيزتي سارة ابراهيم.. أسأل الله أن يبارك في أيامكِ ويجعل البركة والرضا مستقراً لقلبكِ، وأن يوفقكِ توفيقاً يتعجب منه أهل الأرض， ويسعدكِ سعادة الدارين ويكرمكِ من خير عطاياه الواسعة.",
+  سارة: "حبيبتي سارة.. ربي يجعل أيامكِ كلها رضا وسعادة، ويبارك لكِ في خطاكِ ويوفقكِ في كل مساعيكِ， ويرزقكِ طمأنينة النفس وراحة البال， ويبلغكِ كل ما يتطلع إليه قلبكِ النقي من خير ويسر.",
+  روان: "عزيزتي روان.. أسأل الله أن يرزقكِ التوفيق والبركة والسعادة في كل خطوة， وأن يشرح صدركِ بالرضا， ويملأ روحكِ بالسكينة والنور والطمأنينة.",
+  مرام: "إلى مرام الغالية.. ربي يجبر قلبكِ ويسعدكِ سعادة الدارين， ويجعل البركة والرضا رفيقا دربكِ， ويوفقكِ في مسعاكِ ويكرمكِ بتحقيق كل أمنية طيبة يخبئها صدركِ في هذا اليوم العظيم.",
+  ليان: "عزيزتي ليان.. أسأل الله أن يرزقكِ من واسع فضله التوفيق والبركة والسعادة في كل خطوة تخطينها، وأن يشرح صدركِ بالرضا والسكينة، ويجعل دعاءكِ في يوم عرفة مستجاباً، ويحقق لكِ كل أمنية طيبة تتمنينها في هذا اليوم المبارك.",
+};
+
+const defaultPrayer =
+  "اللهم اجعل لها في يوم عرفة نصيباً وافراً من الرحمة والمغفرة والعتق من النار، واستجب دعاءها المخبأ في صدرها， ونوّر دربها， واجمعنا بها في جنات النعيم على سرر متقابلين يارب العالمين.";
+
+export default function ArafahPrayers() {
+  const [name, setName] = useState("");
+  const [submittedName, setSubmittedName] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    setIsSearching(true);
+    setTimeout(() => {
+      setSubmittedName(name.trim());
+      setIsSearching(false);
+    }, 1000); // إطالة بسيطة لتعزيز تجربة البحث التفاعلية
+  };
+
+  const handleOpenEnvelope = () => {
+    setIsOpen(true);
+    confetti({
+      particleCount: 100,
+      spread: 80,
+      origin: { y: 0.65 },
+      colors: ["#dfb15b", "#fdfbf7", "#e11d48", "#b45309"],
+    });
+  };
+
+  const handleReset = () => {
+    setName("");
+    setSubmittedName("");
+    setIsOpen(false);
+  };
+
+  const currentPrayer = prayersData[submittedName] || defaultPrayer;
+
+  // فحص ذكي لتحديد ما إذا كان المستخدم الأب أو شخص مذكر بناءً على الأسماء المحددة
+  const isMale =
+    submittedName === "محمد" ||
+    submittedName === "بابا" ||
+    submittedName === "أحمد";
+  const titlePrefix = isMale ? "إلى الغالي:" : "إلى الغالية:";
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="min-h-screen bg-gradient-to-b from-[#fdfbf7] via-[#f7f3eb] to-[#eedec9] text-[#4a3728] flex flex-col justify-between items-center p-4 relative overflow-hidden font-sans select-none">
+      {/* أجواء تفاعلية حية: جزيئات باهتة تطوف في الخلفية ببطء */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <motion.div
+          animate={{ y: [0, -30, 0], x: [0, 15, 0], opacity: [0.3, 0.6, 0.3] }}
+          transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
+          className="absolute top-1/4 left-10 w-48 h-48 bg-[#dfb15b]/10 rounded-full filter blur-2xl"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+        <motion.div
+          animate={{ y: [0, 40, 0], x: [0, -20, 0], opacity: [0.2, 0.5, 0.2] }}
+          transition={{ repeat: Infinity, duration: 10, ease: "easeInOut" }}
+          className="absolute bottom-1/4 right-5 w-64 h-64 bg-[#e11d48]/5 rounded-full filter blur-3xl"
+        />
+      </div>
+
+      {/* الهيدر العلوي */}
+      <header className="w-full max-w-2xl text-center pt-8 z-10">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="flex justify-center items-center gap-2 mb-2"
+        >
+          <Sparkles className="text-[#dfb15b] animate-pulse" size={20} />
+          <span className="text-xs uppercase tracking-widest text-[#8c7662] font-semibold">
+            نفحات يوم عرفة المبارك 🕋
+          </span>
+          <Sparkles className="text-[#dfb15b] animate-pulse" size={20} />
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.8 }}
+          className="text-3xl md:text-4xl font-serif font-bold text-[#2d1e15] mb-3 drop-shadow-sm"
+        >
+          دعوة من القلب إليكِ
+        </motion.h1>
+      </header>
+
+      {/* المحتوى الرئيسي والأنيميشن الاحترافي */}
+      <main className="w-full max-w-xl flex-grow flex flex-col justify-center items-center my-8 z-10">
+        <AnimatePresence mode="wait">
+          {/* المرحلة 1: شاشة إدخال الاسم (صيغة المؤنث الدافئة) */}
+          {!submittedName && (
+            <motion.div
+              key="input-stage"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              transition={{ duration: 0.5 }}
+              className="w-full bg-white/75 backdrop-blur-lg border border-[#ebdcc5] rounded-3xl p-8 shadow-2xl shadow-[#4a3728]/5 text-center relative overflow-hidden"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              {/* لمحة جمالية على زوايا الكرت */}
+              <div className="absolute top-0 right-0 w-16 h-16 bg-[#dfb15b]/5 rounded-bl-full" />
+
+              <p className="text-base md:text-lg text-[#6b533e] mb-6 font-medium leading-relaxed">
+                أهلاً بكِ يا حبيبة قلبي وقرة عيني.. <br />
+                لأن دعائي لكِ يحمل خصوصية ومحبة طاهرة، فضلاً اكتبِ اسمكِ لترى ما
+                خبأه لكِ قلبي في هذا اليوم العظيم والمبارك.
+              </p>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="اكتبي اسمكِ هنا..."
+                    required
+                    className="w-full px-6 py-4 bg-white/90 border-2 border-[#eedec9] rounded-2xl text-center text-xl text-[#2d1e15] focus:outline-none focus:border-[#dfb15b] focus:ring-2 focus:ring-[#dfb15b]/20 placeholder:text-[#bcaaa4] transition-all font-medium shadow-inner"
+                  />
+                </div>
+
+                <motion.button
+                  whileHover={{
+                    scale: 1.02,
+                    boxShadow: "0 10px 20px rgba(110,80,51,0.15)",
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  disabled={isSearching}
+                  className="w-full py-4 bg-gradient-to-r from-[#8c6d4f] to-[#6e5033] text-white font-medium rounded-2xl transition-all flex justify-center items-center gap-2 text-lg shadow-md"
+                >
+                  {isSearching ? (
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <span>ابحثي عن رسالتكِ</span>
+                      <Send size={18} className="rtl:rotate-180" />
+                    </>
+                  )}
+                </motion.button>
+              </form>
+            </motion.div>
+          )}
+
+          {/* المرحلة 2: الظرف المقفل الفاخر مع تأثير التحويم الهزاز */}
+          {submittedName && !isOpen && (
+            <motion.div
+              key="envelope-stage"
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -50, scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 90, damping: 14 }}
+              className="flex flex-col items-center cursor-pointer"
+              onClick={handleOpenEnvelope}
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+              <p className="text-sm text-[#8c7662] mb-5 font-semibold tracking-wider animate-bounce">
+                إليكِ يا غالية، اضغطي لفتح ظرفكِ المخصص بقصائد الدعاء ✨
+              </p>
+
+              <motion.div
+                whileHover={{ scale: 1.06, rotate: [0, -1, 1, -1, 0] }}
+                transition={{ duration: 0.4 }}
+                className="relative w-80 h-52 bg-[#fdfaf2] border-2 border-[#dfb15b] rounded-3xl shadow-2xl flex items-center justify-center overflow-hidden"
+              >
+                {/* تفاصيل طيّة كرت الظرف الكلاسيكي */}
+                <div className="absolute inset-0 border-t-[104px] border-t-transparent border-b-[104px] border-b-[#f4eae1] border-l-[160px] border-l-transparent border-r-[160px] border-r-transparent pointer-events-none" />
+                <div className="absolute inset-0 border-t-[104px] border-t-[#ebdcc5]/80 border-b-[104px] border-b-transparent border-l-[160px] border-l-transparent border-r-[160px] border-r-transparent top-0 pointer-events-none" />
+
+                {/* شارة الختم الشمعي على شكل قلب ينبض */}
+                <motion.div
+                  animate={{ scale: [1, 1.12, 1] }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 1.5,
+                    ease: "easeInOut",
+                  }}
+                  className="z-10 w-16 h-16 bg-gradient-to-br from-[#e11d48] to-[#991b1b] rounded-full flex items-center justify-center shadow-xl shadow-[#991b1b]/20"
+                >
+                  <MailOpen className="text-white" size={24} />
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* المرحلة 3: خروج الكرت المكتوب من الظرف الفاخر وعرض الدعوات */}
+          {submittedName && isOpen && (
+            <motion.div
+              key="letter-stage"
+              initial={{ opacity: 0, y: 70, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 75, damping: 13 }}
+              className="w-full max-w-md bg-[#fffdf9] border-t-4 border-t-[#dfb15b] border border-[#f0e3d0] rounded-3xl p-8 shadow-2xl relative overflow-hidden"
+            >
+              {/* شارة علوية منسقة ومتحركة برقة */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 }}
+                className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-[#dfb15b] to-[#b45309] text-white text-xs font-bold px-5 py-1.5 rounded-full shadow-md whitespace-nowrap flex items-center gap-1.5"
+              >
+                <Heart size={12} className="fill-white" />
+                دعوة يوم عرفة مخصصة لكِ
+              </motion.div>
+
+              <div className="text-center mt-5">
+                <motion.h3
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-xl font-bold text-[#2d1e15] mb-4"
+                >
+                  {titlePrefix}{" "}
+                  <span className="text-[#be123c] underline decoration-wavy decoration-[#dfb15b]/40">
+                    {submittedName}
+                  </span>
+                </motion.h3>
+
+                {/* نص الدعاء المكتوب بتأثير الظهور الناعم والمريح للعين */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4, duration: 0.8 }}
+                  className="text-lg text-[#523e2b] leading-relaxed font-serif bg-[#fdfbf7] p-5 rounded-2xl italic border-r-4 border-r-[#dfb15b] pr-4 text-right shadow-inner whitespace-pre-line"
+                >
+                  "{currentPrayer}"
+                </motion.div>
+
+                {/* خط فاصل روحاني */}
+                <div className="my-6 flex justify-center items-center gap-2">
+                  <div className="h-[1px] w-12 bg-[#eedec9]" />
+                  <Heart size={16} className="text-[#e11d48] fill-[#e11d48]" />
+                  <div className="h-[1px] w-12 bg-[#eedec9]" />
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleReset}
+                  className="text-xs font-semibold text-[#8c7662] hover:text-[#2d1e15] underline underline-offset-4 transition-colors"
+                >
+                  العودة وكتابة اسم آخر 🤍
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
+
+      {/* الـ Footer مع رسالة الحب الدائمة لجميع الأحباب */}
+      <footer className="w-full max-w-2xl text-center pb-6 z-10">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 1 }}
+          className="border-t border-[#ebdcc5] pt-4 px-4"
+        >
+          <p className="text-xs md:text-sm text-[#7c644e] font-medium leading-relaxed italic">
+            "إلى كل أحبابي الذين يمرون من هنا.. أنتم قطعة من قلبي، وجودكم في
+            حياتي نعمة أشكر الله عليها دائماً، <br />
+            ولا تنسوني من صالح دعائكم في هذا اليوم العظيم والمبارك." ✨
+          </p>
+          <div className="mt-3 text-[10px] text-[#a8927e] tracking-widest font-mono">
+            صُنع بحب ودعوات صادقة في يوم عرفة المبارك 🕊️
+          </div>
+        </motion.div>
+      </footer>
     </div>
   );
 }
